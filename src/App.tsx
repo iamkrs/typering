@@ -230,7 +230,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(({ ...props }, ref: any) 
         });
       }}
       onKeyDown={(e) => {
-        if (["Tab", "Backspace"].includes(e.key)) e.preventDefault();
+        if (["Tab"].includes(e.key)) e.preventDefault();
       }}
     />
   );
