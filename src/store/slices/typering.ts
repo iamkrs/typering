@@ -10,7 +10,7 @@ export interface TyperingState {
 const initialState: TyperingState = {
   collection: {},
   active: undefined,
-  color: "#ABB8C3",
+  color: localStorage.getItem("color") || "#ABB8C3",
   colorPicker: false,
 };
 

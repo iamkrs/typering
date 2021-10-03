@@ -180,6 +180,7 @@ const ColorPicker: FC<ColorPickerProps> = ({ children, ...props }) => {
             if (event.target.value?.length < 6) return;
 
             dispatch(setColor(color.hex));
+            localStorage.setItem("color", color.hex);
             dispatch(setColorPicker(false));
           }}
           css={css`
