@@ -21,7 +21,6 @@ export const typeringSlice = createSlice({
     add: (state, action: PayloadAction<{ id: string; createdAt: number; x: number; y: number; color: string; text?: string }>) => {
       const { id, createdAt, x, y, color, text } = action.payload;
       state.collection[id] = { createdAt, x, y, color, text: text ? text : "" };
-      state.active = id;
     },
     update: (state, action: PayloadAction<{ id: string; x?: number; y?: number; color?: string; text?: string }>) => {
       const { id, x, y, color, text } = action.payload;
@@ -38,6 +37,9 @@ export const typeringSlice = createSlice({
       delete state.collection[id];
       if (state.active === id) state.active = undefined;
     },
+    select: (state, action: PayloadAction<string>) => {
+      state.active = action.payload;
+    },
     blur: (state) => {
       state.active = undefined;
     },
@@ -50,7 +52,7 @@ export const typeringSlice = createSlice({
   },
 });
 
-export const { add, update, load, remove, blur, setColor, setColorPicker } = typeringSlice.actions;
+export const { add, update, load, remove, select, blur, setColor, setColorPicker } = typeringSlice.actions;
 
 // Helpers
 export function randomInt(min: number, max: number) {

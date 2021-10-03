@@ -2,7 +2,7 @@ import "./App/vars.css";
 import { FC, forwardRef, Fragment, useEffect, useRef } from "react";
 import { css, keyframes } from "@emotion/react";
 import GlobalStyles from "./App/GlobalStyles";
-import { add, blur, load, remove, setColor, setColorPicker, Typering as TyperingProps, update } from "./store/slices/typering";
+import { add, blur, load, remove, select, setColor, setColorPicker, Typering as TyperingProps, update } from "./store/slices/typering";
 import { useAppDispatch, useAppSelector } from "./hooks";
 import useWebSocket from "react-use-websocket";
 import { SendJsonMessage } from "react-use-websocket/dist/lib/types";
@@ -91,6 +91,7 @@ const Typerings: FC<TyperingsProps> = ({ sendJsonMessage, ...props }) => {
             text: "",
           };
           dispatch(add(typering));
+          dispatch(select(typering.id));
           sendJsonMessage({ action: "add", ...typering });
         }
       }}
