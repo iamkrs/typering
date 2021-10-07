@@ -59,7 +59,7 @@ wss.on("connection", function connection(socket) {
   });
 });
 
-setInterval(() => {
+const removeTyperingsByDuration = () => {
   const now = new Date().getTime();
 
   Object.keys(typerings).forEach((id) => {
@@ -70,6 +70,32 @@ setInterval(() => {
       delete typerings[id];
     }
   });
+};
+
+const sortByCreatedAt = (a, b) => {
+  const dateA = new Date(parseInt(a.split(":::")[0]));
+  const dateB = new Date(parseInt(b.split(":::")[0]));
+  return dateB - dateA;
+};
+
+const removeTyperingsByCount = () => {
+  const limit = 50;
+  const ids = Object.keys(typerings).slice().sort(sortByCreatedAt);
+
+  if (ids.length > limit) {
+    const diff = limit - ids.length;
+    const idsToRemove = ids.splice(diff);
+    idsToRemove.forEach((id) => {
+      sockets.forEach((_socket) => {
+        _socket.send(JSON.stringify({ action: "remove", id }));
+      });
+      delete typerings[id];
+    });
+  }
+};
+
+setInterval(() => {
+  removeTyperingsByCount();
 }, 1000);
 
 server.listen(port, function () {

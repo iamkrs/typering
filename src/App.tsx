@@ -83,7 +83,7 @@ const Typerings: FC<TyperingsProps> = ({ sendJsonMessage, ...props }) => {
           const { clientX, clientY } = event;
           const now = new Date().getTime();
           const typering = {
-            id: `${now}/${navigator.userAgent}`,
+            id: `${now}:::${navigator.userAgent}`,
             createdAt: now,
             x: clientX,
             y: clientY,
