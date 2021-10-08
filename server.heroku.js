@@ -59,18 +59,18 @@ wss.on("connection", function connection(socket) {
   });
 });
 
-const removeTyperingsByDuration = () => {
-  const now = new Date().getTime();
+// const removeTyperingsByDuration = () => {
+//   const now = new Date().getTime();
 
-  Object.keys(typerings).forEach((id) => {
-    if (typerings[id].createdAt < now - 1 * 60 * 1000) {
-      sockets.forEach((_socket) => {
-        _socket.send(JSON.stringify({ action: "remove", id }));
-      });
-      delete typerings[id];
-    }
-  });
-};
+//   Object.keys(typerings).forEach((id) => {
+//     if (typerings[id].createdAt < now - 1 * 60 * 1000) {
+//       sockets.forEach((_socket) => {
+//         _socket.send(JSON.stringify({ action: "remove", id }));
+//       });
+//       delete typerings[id];
+//     }
+//   });
+// };
 
 const sortByCreatedAt = (a, b) => {
   const dateA = new Date(parseInt(a.split(":::")[0]));

@@ -2,6 +2,7 @@ import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 export interface TyperingState {
   collection: { [key: string]: Typering };
+  onHold: TyperingOnHold | undefined;
   active: string | undefined;
   color: string;
   colorPicker: boolean;
@@ -9,6 +10,7 @@ export interface TyperingState {
 
 const initialState: TyperingState = {
   collection: {},
+  onHold: undefined,
   active: undefined,
   color: localStorage.getItem("color") || "#ABB8C3",
   colorPicker: false,
@@ -18,16 +20,21 @@ export const typeringSlice = createSlice({
   name: "typering",
   initialState,
   reducers: {
-    add: (state, action: PayloadAction<{ id: string; createdAt: number; x: number; y: number; color: string; text?: string }>) => {
-      const { id, createdAt, x, y, color, text } = action.payload;
-      state.collection[id] = { createdAt, x, y, color, text: text ? text : "" };
+    hold: (state, action: PayloadAction<TyperingOnHold | undefined>) => {
+      state.onHold = action.payload;
     },
-    update: (state, action: PayloadAction<{ id: string; x?: number; y?: number; color?: string; text?: string }>) => {
-      const { id, x, y, color, text } = action.payload;
-      if (x) state.collection[id].x = x;
-      if (y) state.collection[id].y = y;
-      if (color) state.collection[id].color = color;
-      if (text) state.collection[id].text = text;
+    add: (state, action: PayloadAction<TyperingOnHold | undefined>) => {
+      if (action.payload) {
+        const { id, ...typering } = action.payload;
+        state.collection[id] = typering;
+      } else if (state.onHold) {
+        const { id, ...typering } = state.onHold;
+        state.collection[id] = typering;
+      }
+    },
+    update: (state, action: PayloadAction<{ id: string; text: string }>) => {
+      const { id, text } = action.payload;
+      state.collection[id].text = text;
     },
     load: (state, action: PayloadAction<{ action: string; typerings: { [key: string]: Typering } }>) => {
       state.collection = action.payload.typerings;
@@ -52,7 +59,7 @@ export const typeringSlice = createSlice({
   },
 });
 
-export const { add, update, load, remove, select, blur, setColor, setColorPicker } = typeringSlice.actions;
+export const { hold, add, update, load, remove, select, blur, setColor, setColorPicker } = typeringSlice.actions;
 
 // Helpers
 export function randomInt(min: number, max: number) {
@@ -69,5 +76,9 @@ export type Typering = {
   text: string;
   color: string;
 };
+
+export interface TyperingOnHold extends Typering {
+  id: string;
+}
 
 export default typeringSlice.reducer;

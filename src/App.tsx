@@ -1,12 +1,12 @@
 import "./App/vars.css";
-import { FC, forwardRef, Fragment, useEffect, useRef } from "react";
-import { css, keyframes } from "@emotion/react";
-import GlobalStyles from "./App/GlobalStyles";
-import { add, blur, load, remove, select, setColor, setColorPicker, Typering as TyperingProps, update } from "./store/slices/typering";
-import { useAppDispatch, useAppSelector } from "./hooks";
-import useWebSocket from "react-use-websocket";
-import { SendJsonMessage } from "react-use-websocket/dist/lib/types";
 import { TwitterPicker } from "react-color";
+import GlobalStyles from "./App/GlobalStyles";
+import useWebSocket from "react-use-websocket";
+import { css, keyframes } from "@emotion/react";
+import { useAppDispatch, useAppSelector } from "./hooks";
+import { FC, forwardRef, Fragment, useEffect, useRef } from "react";
+import { SendJsonMessage } from "react-use-websocket/dist/lib/types";
+import { add, blur, hold, load, remove, select, setColor, setColorPicker, Typering as TyperingProps, TyperingOnHold, update } from "./store/slices/typering";
 
 const reactAppWsUrl = process.env.REACT_APP_WS_URL;
 const wsUrl = reactAppWsUrl ? reactAppWsUrl : `ws://localhost:5000`;
@@ -64,8 +64,8 @@ const Typerings: FC<TyperingsProps> = ({ sendJsonMessage, ...props }) => {
   const dispatch = useAppDispatch();
   const collection = useAppSelector((store) => store.typering.collection);
   const color = useAppSelector((store) => store.typering.color);
-  const active = useAppSelector((store) => store.typering.active);
   const colorPicker = useAppSelector((store) => store.typering.colorPicker);
+  const onHold = useAppSelector((store) => store.typering.onHold);
 
   return (
     <div
@@ -90,55 +90,69 @@ const Typerings: FC<TyperingsProps> = ({ sendJsonMessage, ...props }) => {
             color,
             text: "",
           };
-          dispatch(add(typering));
+
+          dispatch(hold(typering));
           dispatch(select(typering.id));
-          sendJsonMessage({ action: "add", ...typering });
         }
       }}
       {...props}
     >
-      {Object.entries(collection).map(([id, { x, y, text, color }]: [id: string, typering: TyperingProps]) => {
-        return (
-          <div
-            key={id}
-            css={css`
-              position: absolute;
-              left: ${x}px;
-              top: ${y}px;
-              color: ${color};
-              white-space: nowrap;
-              user-select: none;
-            `}
-          >
-            <div
-              css={css`
-                position: relative;
-              `}
-            >
-              {text}
-              {id === active ? (
-                <svg
-                  viewBox="0 0 24 24"
-                  css={css`
-                    width: 20px;
-                    height: 20px;
-                    position: absolute;
-                    top: -4px;
-                    right: -14px;
-                    animation: ${blinkCaret} 0.75s infinite;
-                  `}
-                >
-                  <path
-                    fill={color}
-                    d="M13,19A1,1 0 0,0 14,20H16V22H13.5C12.95,22 12,21.55 12,21C12,21.55 11.05,22 10.5,22H8V20H10A1,1 0 0,0 11,19V5A1,1 0 0,0 10,4H8V2H10.5C11.05,2 12,2.45 12,3C12,2.45 12.95,2 13.5,2H16V4H14A1,1 0 0,0 13,5V19Z"
-                  />
-                </svg>
-              ) : null}
-            </div>
-          </div>
-        );
+      {Object.entries(collection).map(([id, props]: [id: string, typering: TyperingProps]) => {
+        return <Typering id={id} {...props} />;
       })}
+      {onHold ? <Typering {...onHold} /> : !1}
     </div>
+  );
+};
+
+const Typering: FC<TyperingOnHold> = (props) => {
+  const { id, x, y, color, text } = props;
+  const active = useAppSelector((store) => store.typering.active);
+
+  return (
+    <div
+      key={id}
+      css={css`
+        position: absolute;
+        left: ${x}px;
+        top: ${y}px;
+        color: ${color};
+        white-space: nowrap;
+        user-select: none;
+      `}
+    >
+      <div
+        css={css`
+          position: relative;
+        `}
+      >
+        {text}
+        {id === active ? <Caret color={color} /> : null}
+      </div>
+    </div>
+  );
+};
+
+type CaretProps = { color: string };
+
+const Caret: FC<CaretProps> = ({ children, color, ...props }) => {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      css={css`
+        width: 20px;
+        height: 20px;
+        position: absolute;
+        top: -4px;
+        right: -14px;
+        animation: ${blinkCaret} 0.75s infinite;
+      `}
+    >
+      <path
+        fill={color}
+        d="M13,19A1,1 0 0,0 14,20H16V22H13.5C12.95,22 12,21.55 12,21C12,21.55 11.05,22 10.5,22H8V20H10A1,1 0 0,0 11,19V5A1,1 0 0,0 10,4H8V2H10.5C11.05,2 12,2.45 12,3C12,2.45 12.95,2 13.5,2H16V4H14A1,1 0 0,0 13,5V19Z"
+      />
+    </svg>
   );
 };
 
@@ -202,6 +216,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(({ ...props }, ref: any) 
   const dispatch = useAppDispatch();
   const collection = useAppSelector((store) => store.typering.collection);
   const id = useAppSelector((store) => store.typering.active);
+  const onHold = useAppSelector((store) => store.typering.onHold);
   const typering = id ? collection[id] : undefined;
 
   useEffect(() => {
@@ -219,8 +234,15 @@ const Input = forwardRef<HTMLInputElement, InputProps>(({ ...props }, ref: any) 
       onChange={(e) => {
         if (id) {
           const typering = { id, text: e.target.value };
-          dispatch(update(typering));
-          props.sendJsonMessage({ action: "update", ...typering });
+          if (hold) {
+            dispatch(add());
+            dispatch(update(typering));
+            props.sendJsonMessage({ action: "add", ...onHold });
+            dispatch(hold(undefined));
+            props.sendJsonMessage({ action: "update", ...typering });
+          } else {
+            props.sendJsonMessage({ action: "update", ...typering });
+          }
         }
       }}
       onBlur={(e) => {
