@@ -3,7 +3,7 @@ import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 export interface TyperingState {
   collection: { [key: string]: Typering };
   onHold: TyperingOnHold | undefined;
-  active: string | undefined;
+  active: TyperingOnHold | undefined;
   color: string;
   colorPicker: boolean;
   counter: number;
@@ -44,10 +44,10 @@ export const typeringSlice = createSlice({
     remove: (state, action: PayloadAction<{ action: string; id: string }>) => {
       const { id } = action.payload;
       delete state.collection[id];
-      if (state.active === id) state.active = undefined;
+      if (state.active?.id === id) state.active = undefined;
     },
     select: (state, action: PayloadAction<TyperingOnHold>) => {
-      state.active = action.payload.id;
+      state.active = action.payload;
     },
     blur: (state) => {
       state.active = undefined;

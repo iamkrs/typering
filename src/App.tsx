@@ -159,7 +159,7 @@ const Typering: FC<TyperingOnHold> = (props) => {
         `}
       >
         {text}
-        {id === active ? <Caret color={color} /> : null}
+        {id === active?.id ? <Caret color={color} /> : null}
       </div>
     </div>
   );
@@ -247,25 +247,31 @@ type InputProps = {
 const Input = forwardRef<HTMLInputElement, InputProps>(({ ...props }, ref: any) => {
   const dispatch = useAppDispatch();
   const collection = useAppSelector((store) => store.typering.collection);
-  const id = useAppSelector((store) => store.typering.active);
+  const active = useAppSelector((store) => store.typering.active);
   const onHold = useAppSelector((store) => store.typering.onHold);
-  const typering = id ? collection[id] : undefined;
+  const typering = active ? collection[active.id] : undefined;
 
   useEffect(() => {
     const { current } = ref;
-    if (current && id) current.focus();
-  }, [ref, id]);
+    if (current && active) current.focus();
+  }, [ref, active]);
 
   return (
     <input
       ref={ref}
       css={css`
         opacity: 0;
+        ${(onHold || typering) &&
+        css`
+          position: absolute;
+          left: ${onHold?.x || typering?.x}px;
+          top: ${onHold?.y || typering?.y}px;
+        `}
       `}
       value={typering ? typering.text : ""}
       onChange={(e) => {
-        if (id) {
-          const typering = { id, text: e.target.value };
+        if (active) {
+          const typering = { id: active.id, text: e.target.value };
           if (hold) {
             dispatch(add());
             dispatch(update(typering));
@@ -280,7 +286,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(({ ...props }, ref: any) 
       onBlur={(e) => {
         setTimeout(() => {
           const { current } = ref;
-          if (current && id) current.focus();
+          if (current && active) current.focus();
         });
       }}
       onKeyDown={(e) => {

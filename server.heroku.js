@@ -23,14 +23,18 @@ let sockets = [];
 var typerings = {};
 
 const add = ({ id, createdAt, x, y, color, text }) => {
-  typerings[id] = { createdAt, x, y, color, text: text ? text : "" };
+  if (typerings[id]) {
+    typerings[id] = { createdAt, x, y, color, text: text ? text : "" };
+  }
 };
 
 const update = ({ id, x, y, color, text }) => {
-  if (x) typerings[id].x = x;
-  if (y) typerings[id].y = y;
-  if (color) typerings[id].color = color;
-  if (text) typerings[id].text = text;
+  if (typerings[id]) {
+    if (x) typerings[id].x = x;
+    if (y) typerings[id].y = y;
+    if (color) typerings[id].color = color;
+    if (text) typerings[id].text = text;
+  }
 };
 
 const flush = () => {
@@ -65,7 +69,6 @@ wss.on("connection", function connection(socket) {
       update(lastJsonMessage);
     }
     if (lastJsonMessage.action === "flush") {
-      console.log("flush");
       flush();
     }
     sockets.forEach((_socket) => {
