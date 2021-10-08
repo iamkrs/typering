@@ -39,7 +39,7 @@ const flush = () => {
 
 const updateCounter = () => {
   sockets.forEach((_socket) => {
-    _socket.send(JSON.stringify({ action: "counter", value: sockets.length }));
+    if (_socket.readyState === 1) _socket.send(JSON.stringify({ action: "counter", value: sockets.length }));
   });
 };
 
@@ -48,7 +48,7 @@ wss.on("connection", function connection(socket) {
   sockets.push(socket);
 
   // Send typerings
-  socket.send(JSON.stringify({ action: "load", typerings }));
+  if (socket.readyState === 1) socket.send(JSON.stringify({ action: "load", typerings }));
 
   // Update counter
   updateCounter();
@@ -70,7 +70,7 @@ wss.on("connection", function connection(socket) {
     }
     sockets.forEach((_socket) => {
       if (_socket.id !== socket.id) {
-        _socket.send(message);
+        if (_socket.readyState === 1) _socket.send(message);
       }
     });
   });
@@ -110,7 +110,7 @@ const removeTyperingsByCount = () => {
     const idsToRemove = ids.splice(diff);
     idsToRemove.forEach((id) => {
       sockets.forEach((_socket) => {
-        _socket.send(JSON.stringify({ action: "remove", id }));
+        if (_socket.readyState === 1) _socket.send(JSON.stringify({ action: "remove", id }));
       });
       delete typerings[id];
     });
