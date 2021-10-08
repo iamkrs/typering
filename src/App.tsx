@@ -6,7 +6,7 @@ import { css, keyframes } from "@emotion/react";
 import { useAppDispatch, useAppSelector } from "./hooks";
 import { FC, forwardRef, Fragment, useEffect, useRef } from "react";
 import { SendJsonMessage } from "react-use-websocket/dist/lib/types";
-import { add, blur, hold, load, remove, select, setColor, setColorPicker, Typering as TyperingProps, TyperingOnHold, update } from "./store/slices/typering";
+import { add, blur, counter, flush, hold, load, remove, select, setColor, setColorPicker, Typering as TyperingProps, TyperingOnHold, update } from "./store/slices/typering";
 
 const reactAppWsUrl = process.env.REACT_APP_WS_URL;
 const wsUrl = reactAppWsUrl ? reactAppWsUrl : `ws://localhost:5000`;
@@ -38,8 +38,24 @@ const App: FC = () => {
       if (lastJsonMessage.action === "remove") {
         dispatch(remove(lastJsonMessage));
       }
+      if (lastJsonMessage.action === "flush") {
+        dispatch(flush());
+      }
+      if (lastJsonMessage.action === "counter") {
+        dispatch(counter(lastJsonMessage));
+      }
     }
   }, [dispatch, lastJsonMessage]);
+
+  // @ts-ignore
+  window.flush = (delay) =>
+    setTimeout(
+      () => {
+        dispatch(flush());
+        sendJsonMessage({ action: "flush" });
+      },
+      delay ? delay : 0
+    );
 
   return (
     <Fragment>
@@ -47,7 +63,23 @@ const App: FC = () => {
       <Typerings sendJsonMessage={sendJsonMessage} />
       <Input ref={inputRef} sendJsonMessage={sendJsonMessage} />
       <ColorPicker />
+      <Counter />
     </Fragment>
+  );
+};
+
+const Counter: FC = () => {
+  const counter = useAppSelector((store) => store.typering.counter);
+  return (
+    <div
+      css={css`
+        position: absolute;
+        right: 30px;
+        top: 30px;
+      `}
+    >
+      {counter} online
+    </div>
   );
 };
 
@@ -92,13 +124,13 @@ const Typerings: FC<TyperingsProps> = ({ sendJsonMessage, ...props }) => {
           };
 
           dispatch(hold(typering));
-          dispatch(select(typering.id));
+          dispatch(select(typering));
         }
       }}
       {...props}
     >
       {Object.entries(collection).map(([id, props]: [id: string, typering: TyperingProps]) => {
-        return <Typering id={id} {...props} />;
+        return <Typering key={id} id={id} {...props} />;
       })}
       {onHold ? <Typering {...onHold} /> : !1}
     </div>

@@ -25,11 +25,22 @@ var typerings = {};
 const add = ({ id, createdAt, x, y, color, text }) => {
   typerings[id] = { createdAt, x, y, color, text: text ? text : "" };
 };
+
 const update = ({ id, x, y, color, text }) => {
   if (x) typerings[id].x = x;
   if (y) typerings[id].y = y;
   if (color) typerings[id].color = color;
   if (text) typerings[id].text = text;
+};
+
+const flush = () => {
+  typerings = {};
+};
+
+const updateCounter = () => {
+  sockets.forEach((_socket) => {
+    _socket.send(JSON.stringify({ action: "counter", value: sockets.length }));
+  });
 };
 
 wss.on("connection", function connection(socket) {
@@ -39,6 +50,9 @@ wss.on("connection", function connection(socket) {
   // Send typerings
   socket.send(JSON.stringify({ action: "load", typerings }));
 
+  // Update counter
+  updateCounter();
+
   socket.on("message", function (message) {
     var lastJsonMessage = JSON.parse(message);
     if (lastJsonMessage.action === "add") {
@@ -46,6 +60,13 @@ wss.on("connection", function connection(socket) {
     }
     if (lastJsonMessage.action === "update") {
       update(lastJsonMessage);
+    }
+    if (lastJsonMessage.action === "update") {
+      update(lastJsonMessage);
+    }
+    if (lastJsonMessage.action === "flush") {
+      console.log("flush");
+      flush();
     }
     sockets.forEach((_socket) => {
       if (_socket.id !== socket.id) {
@@ -56,6 +77,8 @@ wss.on("connection", function connection(socket) {
 
   socket.on("close", function () {
     sockets = sockets.filter((s) => s !== socket);
+    // Update counter
+    updateCounter();
   });
 });
 

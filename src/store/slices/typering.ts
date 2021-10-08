@@ -6,6 +6,7 @@ export interface TyperingState {
   active: string | undefined;
   color: string;
   colorPicker: boolean;
+  counter: number;
 }
 
 const initialState: TyperingState = {
@@ -14,6 +15,7 @@ const initialState: TyperingState = {
   active: undefined,
   color: localStorage.getItem("color") || "#ABB8C3",
   colorPicker: false,
+  counter: 0,
 };
 
 export const typeringSlice = createSlice({
@@ -34,7 +36,7 @@ export const typeringSlice = createSlice({
     },
     update: (state, action: PayloadAction<{ id: string; text: string }>) => {
       const { id, text } = action.payload;
-      state.collection[id].text = text;
+      if (state.collection[id]) state.collection[id].text = text;
     },
     load: (state, action: PayloadAction<{ action: string; typerings: { [key: string]: Typering } }>) => {
       state.collection = action.payload.typerings;
@@ -44,8 +46,8 @@ export const typeringSlice = createSlice({
       delete state.collection[id];
       if (state.active === id) state.active = undefined;
     },
-    select: (state, action: PayloadAction<string>) => {
-      state.active = action.payload;
+    select: (state, action: PayloadAction<TyperingOnHold>) => {
+      state.active = action.payload.id;
     },
     blur: (state) => {
       state.active = undefined;
@@ -56,10 +58,17 @@ export const typeringSlice = createSlice({
     setColorPicker: (state, action: PayloadAction<boolean>) => {
       state.colorPicker = action.payload;
     },
+    flush: (state) => {
+      state.collection = {};
+    },
+    counter: (state, action: PayloadAction<{ action: string; value: number }>) => {
+      const { value } = action.payload;
+      state.counter = value;
+    },
   },
 });
 
-export const { hold, add, update, load, remove, select, blur, setColor, setColorPicker } = typeringSlice.actions;
+export const { hold, add, update, load, remove, select, blur, setColor, setColorPicker, flush, counter } = typeringSlice.actions;
 
 // Helpers
 export function randomInt(min: number, max: number) {
